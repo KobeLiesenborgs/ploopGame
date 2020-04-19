@@ -75,7 +75,13 @@ window.onload = () => {
             const image = document.createElement("IMG");
 
             image.className = elementClass;
-            image.src = url||banana;
+            if (tags.emotes) {
+                const emoteIds = Object.keys(tags.emotes);
+                const emoteId = emoteIds[Math.floor(Math.random() * emoteIds.length)];
+                image.src = `https://static-cdn.jtvnw.net/emoticons/v1/${emoteId}/2.0`;
+            } else {
+                image.src = url||banana;
+            }
             image.onerror = ()=>image.src = banana;
 
             image.style.position = 'absolute';
