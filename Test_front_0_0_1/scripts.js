@@ -1,14 +1,21 @@
 window.onload = () => {
-    console.log("Dropgame Loaded")
+    console.log("Dropgame Loaded");
     const socket = io.connect("localhost:3000");
-    const speed = 5
-    const elementClass = "dropImages"
-    const maxSpeed = 5
-    const displays = {}
-    let frame = 0
-    let banana = "https://media.giphy.com/media/IB9foBA4PVkKA/giphy.gif"
-    let toDelete = []
-    let bounceMode = true
+    const speed = 5;
+    const elementClass = "dropImages";
+    const maxSpeed = 5;
+    const displays = {};
+    let frame = 0;
+    let banana = "https://media.giphy.com/media/IB9foBA4PVkKA/giphy.gif";
+    let toDelete = [];
+    let bounceMode = true;
+    let audioContext = new AudioContext();
+    let audioElement1 = document.getElementById("audio-yeet1");
+    const track1 = audioContext.createMediaElementSource(audioElement1);
+    const audioElement2 = document.getElementById("audio-yeet2");
+    const track2 = audioContext.createMediaElementSource(audioElement2);
+    track1.connect(audioContext.destination);
+    track2.connect(audioContext.destination);
 
     gameLoop()
 
@@ -91,6 +98,14 @@ window.onload = () => {
         yeetImage.style.top = displays[name].image.style.top - displays[name].image.width/2;
         yeetImage.style.left = displays[name].image.style.left;
         yeetImage.width = displays[name].image.height*3;
+
+        let yeetChoice = Math.random()
+        if(yeetChoice<0.05){
+            audioElement2.play();
+        }
+        else{
+            audioElement1.play();
+        }
 
         document.body.appendChild(yeetImage);
         window.setTimeout(()=>{
