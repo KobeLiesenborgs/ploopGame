@@ -10,7 +10,7 @@ img.alive{
 img.dead{
     transform-origin: bottom center;
     opacity: 0;
-    animation: fadeout 50s;
+    animation: fadeout 90s;
 }
 
 .yeet{
