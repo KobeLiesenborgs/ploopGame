@@ -76,11 +76,14 @@ window.onload = () => {
             for(let d of remove){
                 displays[d].deleted = true
                 toDelete.push(d)
+                const img = displays[d].image
+                img.classList.remove("alive")
+                img.classList.add("dead")
                 window.setTimeout(()=>{
                     if(toDelete.length>0){
                         let a = toDelete.shift();document.body.removeChild(displays[a].image);delete displays[a];
                     }
-                },5000)
+                },30000)
             }
         
 
@@ -98,6 +101,7 @@ window.onload = () => {
         yeetImage.style.top = displays[name].image.style.top - displays[name].image.width/2;
         yeetImage.style.left = displays[name].image.style.left;
         yeetImage.width = displays[name].image.height*3;
+        yeetImage.classList.add("yeet")
 
         let yeetChoice = Math.random()
         if(yeetChoice<0.05){
@@ -162,7 +166,8 @@ window.onload = () => {
             
             const image = document.createElement("IMG");
 
-            image.className = elementClass;
+            image.classList.add(elementClass);
+            image.classList.add("alive")
             if (tags.emotes) {
                 const emoteIds = Object.keys(tags.emotes);
                 const emoteId = emoteIds[Math.floor(Math.random() * emoteIds.length)];
@@ -176,7 +181,7 @@ window.onload = () => {
 
 
             Math.max(image.width,image.height)==image.height?image.height = window.innerHeight/20:image.width = window.innerWidth/20;
-            image.style["border-radius"] = "100%"
+            image.style["border-radius"] = toPixels(Math.max(image.width, image.height))
             
             const x = toPixels(image.width + Math.floor(Math.random()*window.innerWidth*0.7));
             const y = 1;
