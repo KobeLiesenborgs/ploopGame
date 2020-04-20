@@ -181,7 +181,7 @@ window.onload = () => {
 
 
             Math.max(image.width,image.height)==image.height?image.height = window.innerHeight/20:image.width = window.innerWidth/20;
-            image.style["border-radius"] = "100%"
+            image.style["border-radius"] = toPixels(Math.max(image.width, image.height))
             
             const x = toPixels(image.width + Math.floor(Math.random()*window.innerWidth*0.7));
             const y = 1;
