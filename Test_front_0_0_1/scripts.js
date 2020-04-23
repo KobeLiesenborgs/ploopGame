@@ -1,3 +1,5 @@
+
+// random number in a range or random item from array
 function random(min = 0, max = 1) {
     if (min instanceof Array) {
         return min[Math.floor(Math.random() * min.length)]
@@ -14,10 +16,15 @@ window.onload = () => {
     const maxSpeed = 5;
     const displays = {};
     let frame = 0;
-    let banana = "https://media.giphy.com/media/IB9foBA4PVkKA/giphy.gif";
+    let banana = "https://media.giphy.com/media/IB9foBA4PVkKA/giphy.gif"; // fallback url
     let toDelete = [];
     let bounceMode = true;
+    const parachuteSize = 100
+    const paracuteOffset = 35
+    
+    // load audio
     let audioContext = new AudioContext();
+
     const audioElement1 = document.getElementById("audio-yeet1");
     const track1 = audioContext.createMediaElementSource(audioElement1);
     const audioElement2 = document.getElementById("audio-yeet2");
@@ -35,8 +42,8 @@ window.onload = () => {
     track4.connect(audioContext.destination);
     track5.connect(audioContext.destination);
 
-    const parachuteSize = 100
 
+    // basic vector class might improve in the future or just migrate to p5.Vector
     class Vector {
         constructor(x, y) {
             this.x = x
@@ -63,35 +70,41 @@ window.onload = () => {
         }
     }
 
+    // stores all the functionality for the drop, the constructor will set the position, velocity
     class Drop {
         constructor(image) {
-            this.position = new Vector(image.width + Math.floor(Math.random() * window.innerWidth * 0.7), 1)
+            this.position = new Vector(random(image.width, window.innerWidth-image.width), 1)
             this.image = image
             this.image.style.top = toPixels(this.position.y);
             this.image.style.left = toPixels(this.position.x);
-            this.acceleration = new Vector()
+            this.acceleration = new Vector() // currently unused might use in future for better physics
 
             this.velocity = new Vector(random(-maxSpeed, maxSpeed) * 2, random(1, maxSpeed))
-            this.maxSpeed = 4
             this.deleted = false
-            this.mass = this.image.width / 10
+            this.mass = this.image.width / 10 // currently unused might use in future for better physics
             this.yeeted = false
             this.parachuteImg = parachute()
             document.body.appendChild(this.parachuteImg)
-
         }
 
+        // update the position of the drop and set the parachute and base image to right place
         update(speed) {
+            // update position and set image position
             this.position.add(this.velocity.div(speed))
             this.image.style.top = toPixels(this.position.y);
             this.image.style.left = toPixels(this.position.x);
+
+            // if this drop has been yeeted send the parachute flying upwards 
+            // otherwise set it the correct position relative to the drop image
             if (!this.yeeted) {
                 this.parachuteImg.style.top = toPixels(this.position.y - parachuteSize + 15)
                 const w = this.image.width / 2
                 this.parachuteImg.style.left = toPixels(this.position.x + (w - parachuteSize / 2))
             } else {
-                this.parachuteImg.style.top = toPixels(fromPixels(this.parachuteImg.style.top) - 35)
+                this.parachuteImg.style.top = toPixels(fromPixels(this.parachuteImg.style.top) - paracuteOffset)
             }
+
+            // for yoink, if drop goes above top, set its y velocity
             if (this.position.y < 0) {
                 this.velocity.y = random(1, maxSpeed)
             }
@@ -116,6 +129,7 @@ window.onload = () => {
             if (!data.deleted) {
                 data.update(speed)
 
+                // check collision with walls and floor
                 if (data.position.y > window.innerHeight - data.image.height) {
                     remove.push(user);
                 }
@@ -125,6 +139,8 @@ window.onload = () => {
                 }
             }
         }
+
+        // check collisions between different drops
         for (let i = 0; i < Object.keys(displays).length; i++) {
             const a = Object.entries(displays)[i]
             if (!a[1].deleted) {
@@ -134,6 +150,7 @@ window.onload = () => {
             }
         }
 
+        // remove all drops that are on the ground
         for (let d of remove) {
             displays[d].deleted = true
             toDelete.push(d)
@@ -157,6 +174,9 @@ window.onload = () => {
         requestAnimationFrame(gameLoop);
     }
 
+    // process the collision between two drops, 
+    // if they are colliding and it is bounce mode then swap their velocities if it isn't bouncemode, 
+    // yeet them
     function processCollision([user1, drop1], [user2, drop2]) {
         if (intersect(drop1.image, drop2.image) && !isMovingAway(drop1, drop2)) {
             if (bounceMode) {
@@ -197,7 +217,9 @@ window.onload = () => {
         },2000)
     }
 
+    //send the drop flying upward until it hits the top
     function yoink(name){
+        displays[user].yoinked = true
         displays[name].velocity.x=0;
         displays[name].velocity.y=-45;
 
@@ -226,10 +248,12 @@ window.onload = () => {
         },2000)
     }
 
+    // negate the x velocity
     function flip(user){
         displays[user].velocity.x *= -1;
     }
 
+    // check AABB collision becuase the drop have a rectangular hitbox
     function intersect(display1, display2){
 
         let x11 = fromPixels(display1.style.left);
@@ -250,6 +274,7 @@ window.onload = () => {
         return!(AleftOfB||ArightOfB||AaboveB||AunderB)
     }
 
+    // check if they are moving in the same direction or not
     function isMovingAway(drop, drop2) {
         if(fromPixels(drop.image.style.left) < fromPixels(drop2.image.style.left)){
           return drop.velocity.x < drop2.velocity.x;
@@ -260,7 +285,10 @@ window.onload = () => {
       }
 
 
-
+    /*
+      TODO:
+      add command handler
+    */
     socket.on("message",(input)=>{
 
         const tags = input.tags;
@@ -270,6 +298,7 @@ window.onload = () => {
 
         const dropAlliases = ["ploop","drop","noticeme","plop","nm"]
 
+        // a user can drop an image or emote if they currently don't have a drop on the screen
         if(dropAlliases.includes(text.toLowerCase())  && !displays[user]){
 
             
@@ -282,11 +311,10 @@ window.onload = () => {
                 const emoteId = emoteIds[Math.floor(Math.random() * emoteIds.length)];
                 image.src = `https://static-cdn.jtvnw.net/emoticons/v1/${emoteId}/2.0`;
             } else {
-                image.src = url||banana;
+                image.src = url || banana;
             }
+            // if the src doesn't work use the fallback url
             image.onerror = ()=>image.src = banana;
-
-            image.style.position = 'absolute';
 
 
             Math.max(image.width,image.height)==image.height?image.height = window.innerHeight/20:image.width = window.innerWidth/20;
@@ -299,16 +327,15 @@ window.onload = () => {
 
         }
 
+        // a drop can not be yeeted if it is deleted or it has been yeeted before
         if(text.toLowerCase() == "yeet" && displays[user]){
-
-            if(!displays[user].deleted){
+            if(!displays[user].deleted && !displays[user].yeeted){
                 yeet(user);
             }
-
         }
 
+        // mods can yeet all drops on the screen
         if(text.toLowerCase() == "yeetall" && ["broadcaster","moderator","vip"].some((type)=>(tags["badges"]||{})[type])){
-
             for(user of Object.keys(displays)){
                 if(!displays[user].deleted){
                     yeet(user)
@@ -316,30 +343,30 @@ window.onload = () => {
             }
         }
 
+        // allow a user to flip their drops x velocity
         if(text.toLowerCase() == "flip" && displays[user]){
-
             flip(user);
-
         }
 
+        // mods can switch between bounceMode and not bounceMode (yeetMode)
         if(text.toLowerCase() == "changemode" && ["broadcaster","moderator"].some((type)=>(tags["badges"]||{})[type])){
             bounceMode = !bounceMode
         }
 
+        // users can yoink their drop up to the top, but only once
         if(text.toLowerCase() == "yoink" && displays[user]){
             if(!displays[user].yoinked && !displays[user].deleted){
                 yoink(user);
-                displays[user].yoinked = true
             }
 
         }
 
+        // mods can yoink all the drops on screen, this will result in all those drops being unyoinkable by their sender
         if(text.toLowerCase() == "yoinkall" && ["broadcaster","moderator","vip"].some((type)=>(tags["badges"]||{})[type])){
 
             for(user of Object.keys(displays)){
                 if(!displays[user].yoinked && !displays[user].deleted){
-                    yoink(user)
-                    displays[user].yoinked = true
+                    yoink(user)                    
                 }
             }
         }
@@ -347,13 +374,12 @@ window.onload = () => {
 
     })
 
-
+    // generate the parachute image
     function parachute() {
         const parachuteImg = document.createElement("IMG");
         parachuteImg.classList.add("parachute")
         parachuteImg.width = parachuteSize;
         parachuteImg.height = parachuteSize
-        // document.body.appendChild(parachuteImg)
         parachuteImg.src = "images/parachute.png"
         return parachuteImg
     }
