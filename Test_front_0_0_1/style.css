@@ -18,6 +18,11 @@ img.dead{
     animation: popin 2s;
 }
 
+.yoink{
+    transform-origin: center center;
+    animation: popin 2s;
+}
+
 @keyframes sway{
     from{
         transform: rotate(-10deg);

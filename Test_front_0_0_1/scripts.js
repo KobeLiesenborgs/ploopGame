@@ -10,12 +10,23 @@ window.onload = () => {
     let toDelete = [];
     let bounceMode = true;
     let audioContext = new AudioContext();
-    let audioElement1 = document.getElementById("audio-yeet1");
+    const audioElement1 = document.getElementById("audio-yeet1");
     const track1 = audioContext.createMediaElementSource(audioElement1);
     const audioElement2 = document.getElementById("audio-yeet2");
     const track2 = audioContext.createMediaElementSource(audioElement2);
+    const audioElement3 = document.getElementById("yoink1");
+    const track3 = audioContext.createMediaElementSource(audioElement3);
+    const audioElement4 = document.getElementById("yoink2");
+    const track4 = audioContext.createMediaElementSource(audioElement4);
+    const audioElement5 = document.getElementById("yoink3");
+    const track5 = audioContext.createMediaElementSource(audioElement5);
+
     track1.connect(audioContext.destination);
     track2.connect(audioContext.destination);
+    track3.connect(audioContext.destination);
+    track4.connect(audioContext.destination);
+    track5.connect(audioContext.destination);
+
 
     gameLoop()
 
@@ -48,6 +59,9 @@ window.onload = () => {
                     if(x<0||x>window.innerWidth-data.image.width){
                         data.xspeed = -data.xspeed
                     }
+                    if(y<0){
+                        data.yspeed = 2+Math.random()*2
+                    }
                 }
             }
             for(let [user1, data1] of Object.entries(displays)){
@@ -63,7 +77,10 @@ window.onload = () => {
 
                     if(collision){
                         if(bounceMode){
-                            yeet(user1);
+                            if(!displays[user1].collided){
+                                yeet(user1);
+                                displays[user1].collided = true
+                            }
                         }
                         else{
                             flip(user1);
@@ -116,6 +133,42 @@ window.onload = () => {
                 document.body.removeChild(yeetImage);
         },2000)
     }
+
+    function yoink(name){
+        displays[name].xspeed=0;
+        displays[name].yspeed=-45;
+
+        let yoinkImage = document.createElement("IMG");
+        yoinkImage.src = "images/Yoink.png"
+        yoinkImage.style.position = 'absolute';
+        yoinkImage.style.top = displays[name].image.style.top - displays[name].image.width/2;
+        yoinkImage.style.left = displays[name].image.style.left;
+        yoinkImage.width = displays[name].image.height*3;
+        yoinkImage.classList.add("yoink")
+
+        let yoinkChoice = Math.random()
+        if(yoinkChoice<0.01){
+            audioElement5.play();
+        }
+        else if(yoinkChoice<0.05){
+            audioElement4.play();
+        }
+        else{
+            audioElement3.play();
+        }
+
+        document.body.appendChild(yoinkImage);
+        window.setTimeout(()=>{
+                document.body.removeChild(yoinkImage);
+        },2000)
+    }
+
+
+
+
+
+
+
 
     function flip(user){
         displays[user].xspeed *= -1;
@@ -191,22 +244,28 @@ window.onload = () => {
             const xspeed =  Math.random()*(2*maxSpeed)-2*maxSpeed
             const yspeed =  2+Math.random()*2
             const deleted = false
+            const yoinked = false
+            const collided = false
         
-            displays[user] = {image, xspeed, yspeed, deleted}
+            displays[user] = {image, xspeed, yspeed, deleted, yoinked, collided}
             document.body.appendChild(image);
 
         }
 
         if(text.toLowerCase() == "yeet" && displays[user]){
 
-            yeet(user);
+            if(!displays[user].deleted){
+                yeet(user);
+            }
 
         }
 
         if(text.toLowerCase() == "yeetall" && ["broadcaster","moderator","vip"].some((type)=>(tags["badges"]||{})[type])){
 
             for(user of Object.keys(displays)){
-                yeet(user)
+                if(!displays[user].deleted){
+                    yeet(user)
+                }
             }
         }
 
@@ -217,8 +276,25 @@ window.onload = () => {
         }
 
         if(text.toLowerCase() == "changemode" && ["broadcaster","moderator"].some((type)=>(tags["badges"]||{})[type])){
-
             bounceMode = !bounceMode
+        }
+
+        if(text.toLowerCase() == "yoink" && displays[user]){
+            if(!displays[user].yoinked && !displays[user].deleted){
+                yoink(user);
+                displays[user].yoinked = true
+            }
+
+        }
+
+        if(text.toLowerCase() == "yoinkall" && ["broadcaster","moderator","vip"].some((type)=>(tags["badges"]||{})[type])){
+
+            for(user of Object.keys(displays)){
+                if(!displays[user].yoinked && !displays[user].deleted){
+                    yoink(user)
+                    displays[user].yoinked = true
+                }
+            }
         }
 
 
