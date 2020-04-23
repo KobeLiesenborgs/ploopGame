@@ -1,5 +1,15 @@
 img{
     transform-origin: top center;
+    position: absolute;
+}
+
+body{
+    overflow: hidden;
+}
+
+.parachute.dead{
+    opacity: 1;
+    animation: shrink 3s ease-out forwards;
 }
 
 img.alive{
@@ -42,6 +52,15 @@ img.dead{
   }
 }
 
+@keyframes shrink {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0);
+  }
+}
+
 @keyframes popin{
     0%{
         transform: scale(0)
@@ -50,5 +69,14 @@ img.dead{
         transform: scale(1.25)
     }100%{
         transform: scale(0);
+    }
+}
+
+@keyframes growin{
+    from{
+        opacity: 0;
+    }
+    to{
+        opacity: 1;
     }
 }

@@ -1,3 +1,11 @@
+function random(min = 0, max = 1) {
+    if (min instanceof Array) {
+        return min[Math.floor(Math.random() * min.length)]
+    } else {
+        return Math.random() * (max - min) + min;
+    }
+}
+
 window.onload = () => {
     console.log("Dropgame Loaded");
     const socket = io.connect("localhost:3000");
@@ -27,6 +35,69 @@ window.onload = () => {
     track4.connect(audioContext.destination);
     track5.connect(audioContext.destination);
 
+    const parachuteSize = 100
+
+    class Vector {
+        constructor(x, y) {
+            this.x = x
+            this.y = y
+        }
+
+        add(vec) {
+            this.x += vec.x
+            this.y += vec.y
+            return this
+        }
+
+        div(scalar) {
+            const copy = new Vector(this.x, this.y)
+            copy.x /= scalar
+            copy.y /= scalar
+            return copy
+        }
+
+        mult(scalar) {
+            this.x *= scalar
+            this.y *= scalar
+            return this
+        }
+    }
+
+    class Drop {
+        constructor(image) {
+            this.position = new Vector(image.width + Math.floor(Math.random() * window.innerWidth * 0.7), 1)
+            this.image = image
+            this.image.style.top = toPixels(this.position.y);
+            this.image.style.left = toPixels(this.position.x);
+            this.acceleration = new Vector()
+
+            this.velocity = new Vector(random(-maxSpeed, maxSpeed) * 2, random(1, maxSpeed))
+            this.maxSpeed = 4
+            this.deleted = false
+            this.mass = this.image.width / 10
+            this.yeeted = false
+            this.parachuteImg = parachute()
+            document.body.appendChild(this.parachuteImg)
+
+        }
+
+        update(speed) {
+            this.position.add(this.velocity.div(speed))
+            this.image.style.top = toPixels(this.position.y);
+            this.image.style.left = toPixels(this.position.x);
+            if (!this.yeeted) {
+                this.parachuteImg.style.top = toPixels(this.position.y - parachuteSize + 15)
+                const w = this.image.width / 2
+                this.parachuteImg.style.left = toPixels(this.position.x + (w - parachuteSize / 2))
+            } else {
+                this.parachuteImg.style.top = toPixels(fromPixels(this.parachuteImg.style.top) - 35)
+            }
+            if (this.position.y < 0) {
+                this.velocity.y = random(1, maxSpeed)
+            }
+
+        }
+    }
 
     gameLoop()
 
@@ -38,79 +109,71 @@ window.onload = () => {
         return (+size.slice(0,-2))
     }
 
-    function gameLoop(){
+    function gameLoop() {
 
-            let remove = [];
-            for(let [user, data] of Object.entries(displays)){
-                if(!data.deleted){
+        let remove = [];
+        for (let [user, data] of Object.entries(displays)) {
+            if (!data.deleted) {
+                data.update(speed)
 
-                    const d = data.image;
-                    let x = fromPixels(d.style.left);
-                    let y = fromPixels(d.style.top);
-                    x += data.xspeed/speed;
-                    y += data.yspeed/speed;
-                    d.style.left = toPixels(x);
-                    d.style.top = toPixels(y);
+                if (data.position.y > window.innerHeight - data.image.height) {
+                    remove.push(user);
+                }
 
-                    if(y>window.innerHeight-data.image.height){
-                        remove.push(user);
-                    }
-
-                    if(x<0||x>window.innerWidth-data.image.width){
-                        data.xspeed = -data.xspeed
-                    }
-                    if(y<0){
-                        data.yspeed = 2+Math.random()*2
-                    }
+                if (data.position.x < 0 || data.position.x > window.innerWidth - data.image.width) {
+                    flip(user)
                 }
             }
-            for(let [user1, data1] of Object.entries(displays)){
-                if(!data1.deleted){
-                    let collision = false;
-                    for(let [user2, data2] of Object.entries(displays)){
-                        if(user1!=user2 &&!data2.deleted){
-                            if(intersect(data1.image, data2.image)&& !isMovingAway(data1,data2)){
-                                collision = true;
-                            }
-                        }
-                    }
-
-                    if(collision){
-                        if(bounceMode){
-                            if(!displays[user1].collided){
-                                yeet(user1);
-                                displays[user1].collided = true
-                            }
-                        }
-                        else{
-                            flip(user1);
-                        }
-                    }
+        }
+        for (let i = 0; i < Object.keys(displays).length; i++) {
+            const a = Object.entries(displays)[i]
+            if (!a[1].deleted) {
+                for (let j = i + 1; j < Object.keys(displays).length; j++) {
+                    processCollision(a, Object.entries(displays)[j])
                 }
             }
+        }
 
+        for (let d of remove) {
+            displays[d].deleted = true
+            toDelete.push(d)
+            const img = displays[d].image
+            const pImg = displays[d].parachuteImg
+            img.classList.remove("alive")
+            img.classList.add("dead")
+            pImg.classList.add("dead")
 
-            for(let d of remove){
-                displays[d].deleted = true
-                toDelete.push(d)
-                const img = displays[d].image
-                img.classList.remove("alive")
-                img.classList.add("dead")
-                window.setTimeout(()=>{
-                    if(toDelete.length>0){
-                        let a = toDelete.shift();document.body.removeChild(displays[a].image);delete displays[a];
-                    }
-                },30000)
-            }
-        
+            window.setTimeout(() => {
+                if (toDelete.length > 0) {
+                    let a = toDelete.shift();
+                    document.body.removeChild(displays[a].image);
+                    document.body.removeChild(displays[a].parachuteImg);
+                    delete displays[a];
+                }
+            }, 30000)
+        }
 
         frame++
         requestAnimationFrame(gameLoop);
     }
 
+    function processCollision([user1, drop1], [user2, drop2]) {
+        if (intersect(drop1.image, drop2.image) && !isMovingAway(drop1, drop2)) {
+            if (bounceMode) {
+                const temp = drop1.velocity.x
+                drop1.velocity.x = drop2.velocity.x
+                drop2.velocity.x = temp
+            } else {
+                yeet(user1)
+                yeet(user2)
+            }
+        }
+    }
+
     function yeet(name){
-        displays[name].xspeed=0;
-        displays[name].yspeed=45;
+        displays[name].yeeted = true
+        displays[name].velocity.x=0;
+        displays[name].velocity.y=45;
 
         let yeetImage = document.createElement("IMG");
         yeetImage.src = "images/Yeet.png"
@@ -135,8 +198,8 @@ window.onload = () => {
     }
 
     function yoink(name){
-        displays[name].xspeed=0;
-        displays[name].yspeed=-45;
+        displays[name].velocity.x=0;
+        displays[name].velocity.y=-45;
 
         let yoinkImage = document.createElement("IMG");
         yoinkImage.src = "images/Yoink.png"
@@ -163,15 +226,8 @@ window.onload = () => {
         },2000)
     }
 
-
-
-
-
-
-
-
     function flip(user){
-        displays[user].xspeed *= -1;
+        displays[user].velocity.x *= -1;
     }
 
     function intersect(display1, display2){
@@ -196,10 +252,10 @@ window.onload = () => {
 
     function isMovingAway(drop, drop2) {
         if(fromPixels(drop.image.style.left) < fromPixels(drop2.image.style.left)){
-          return drop.xspeed < drop2.xspeed;
+          return drop.velocity.x < drop2.velocity.x;
         }
         else {
-          return drop.xspeed > drop2.xspeed;
+          return drop.velocity.x > drop2.velocity.x;
         }
       }
 
@@ -236,18 +292,9 @@ window.onload = () => {
             Math.max(image.width,image.height)==image.height?image.height = window.innerHeight/20:image.width = window.innerWidth/20;
             image.style["border-radius"] = toPixels(Math.max(image.width, image.height))
             
-            const x = toPixels(image.width + Math.floor(Math.random()*window.innerWidth*0.7));
-            const y = 1;
-            image.style.top = y;
-            image.style.left = x;
-
-            const xspeed =  Math.random()*(2*maxSpeed)-2*maxSpeed
-            const yspeed =  2+Math.random()*2
-            const deleted = false
-            const yoinked = false
-            const collided = false
+            const drop = new Drop(image)
         
-            displays[user] = {image, xspeed, yspeed, deleted, yoinked, collided}
+            displays[user] = drop
             document.body.appendChild(image);
 
         }
@@ -299,6 +346,18 @@ window.onload = () => {
 
 
     })
+
+
+    function parachute() {
+        const parachuteImg = document.createElement("IMG");
+        parachuteImg.classList.add("parachute")
+        parachuteImg.width = parachuteSize;
+        parachuteImg.height = parachuteSize
+        // document.body.appendChild(parachuteImg)
+        parachuteImg.src = "images/parachute.png"
+        return parachuteImg
+    }
+
 }
 
 
