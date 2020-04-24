@@ -1,6 +1,6 @@
 window.onload = () => {
     console.log("Timeout loaded")
-    const socket = io.connect("localhost:3000");
+    const socket = io.connect("localhost:3001");
     let startDate = new Date();
     let goal = startDate.getTime();
     let text;
