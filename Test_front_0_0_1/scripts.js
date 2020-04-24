@@ -10,7 +10,7 @@ function random(min = 0, max = 1) {
 
 window.onload = () => {
     console.log("Dropgame Loaded");
-    const socket = io.connect("localhost:3000");
+    const socket = io.connect("localhost:3001");
     const speed = 5;
     const elementClass = "dropImages";
     const maxSpeed = 5;
@@ -292,7 +292,7 @@ window.onload = () => {
     socket.on("message",(input)=>{
 
         const tags = input.tags;
-        user = tags['display-name'];
+        user = tags['username'];
 
         const [text, url] = input.message.split(" ");
 
