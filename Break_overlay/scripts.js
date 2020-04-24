@@ -1,3 +1,6 @@
+"use strict"
+
+
 window.onload = () => {
     console.log("Timeout loaded")
     const socket = io.connect("localhost:3001");
