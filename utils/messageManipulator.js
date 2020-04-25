@@ -1,7 +1,6 @@
 
 // Regexes that will or are currently being used to manipulate messages
 const urlRegex = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/gm
-const codeRegex = /[`]{3}[\w]*/gm // detects discord codeblocks
 const customEmojiRegex = /<:([\w]+):[\d]+>/gm // detects discord custom emoji ids
 const channelMentionRegex = /<#(\d+)>/gm
 const mentionRegex = /<@([\W\S])([\d]+)>/gm
