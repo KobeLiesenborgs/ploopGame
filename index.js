@@ -1,5 +1,3 @@
-"use strict"
-
 const discord = require("discord.js");
 const tmi = require('tmi.js');
 const app = require('express')();
@@ -72,7 +70,7 @@ twitchClient.on('message', (channel, tags, message, self) => {
 
     const messageNoPrefix = message.substr(1)
         for(const socket of sockets){
-            input = {"message":messageNoPrefix, tags}
+            let input = {"message":messageNoPrefix, tags}
             socket.emit('message',input);
         }
 });

@@ -1,6 +1,3 @@
-"use strict"
-
-
 // random number in a range or random item from array
 function random(min = 0, max = 1) {
     if (min instanceof Array) {
