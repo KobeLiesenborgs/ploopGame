@@ -106,6 +106,7 @@ window.onload = () => {
             // for yoink, if drop goes above top, set its y velocity
             if (this.position.y < 0) {
                 this.velocity.y = random(1, maxSpeed)
+                this.velocity.x = random(-maxSpeed, maxSpeed)
             }
 
         }
@@ -293,12 +294,15 @@ window.onload = () => {
         const tags = input.tags;
         user = tags['username'];
 
-        const [text, url] = input.message.split(" ");
+        let [text, url] = input.message.split(" ");
 
         const dropAlliases = ["ploop","drop","noticeme","plop","nm"]
 
         // a user can drop an image or emote if they currently don't have a drop on the screen
         if(dropAlliases.includes(text.toLowerCase())  && !displays[user]){
+            if(url == "me" && tags["platform"]=="discord"){
+                    url = tags["profile-picture"]
+            }
 
             
             const image = document.createElement("IMG");

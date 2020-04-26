@@ -22,6 +22,7 @@ discordClient.on("message", async msg => {
     tags["display-name"] = msg.member.displayName
     tags["username"] = msg.author.username
     tags["platform"] = "discord"
+    tags["profile-picture"] = msg.author.displayAvatarURL()
     const badges = {}
     for(let c of msg.member.roles.cache.array().map((r)=>r.name)){
 
@@ -47,7 +48,7 @@ discordClient.on("message", async msg => {
 
     const messageNoPrefix = msg.content.substr(1)
         for(const socket of sockets){
-            input = {"message":messageNoPrefix, tags};
+            input = {"message":messageNoPrefix, tags, "clean-message":msg.cleanContent.substr(1)};
             socket.emit('message',input);
         }
   }
@@ -67,12 +68,13 @@ twitchClient.connect();
 
 twitchClient.on('message', (channel, tags, message, self) => {
     tags["platform"] = "twitch";
-
-    const messageNoPrefix = message.substr(1)
-        for(const socket of sockets){
-            let input = {"message":messageNoPrefix, tags}
-            socket.emit('message',input);
-        }
+    if(message.startsWith(prefix)) {
+        const messageNoPrefix = message.substr(1)
+            for(const socket of sockets){
+                let input = {"message":messageNoPrefix, tags}
+                socket.emit('message',input);
+            }
+    }
 });
 
 io.on('connection', (socket) => {
