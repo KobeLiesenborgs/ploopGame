@@ -1,15 +1,12 @@
-"use strict"
-
 
 window.onload = () => {
-    console.log("Timeout loaded")
     const socket = io.connect("localhost:3001");
     let startDate = new Date();
     let goal = startDate.getTime();
     let text;
+    let timerOn = true;
     let textField = document.getElementById("t1");
 
-    console.log(textField);
 
     document
     countLoop()
@@ -25,22 +22,22 @@ window.onload = () => {
 
         M = (""+M).padStart(2,"0")
         S = (""+S).padStart(2,"0")
-        
-        if(currentWaitTime>0){
+        if(timerOn){
+            if(currentWaitTime>0){
 
-            text = `Quick break, will restart in ${M} minutes ${S} seconds.`;
+                text = `Quick break, will restart in ${M} minutes ${S} seconds.`;
 
+            }
+            else{
+
+                text = `Should have started ${M} minutes and ${S} seconds ago.`;
+
+            }
         }
-        else{
-
-            text = `Should have started ${M} minutes and ${S} seconds ago.`;
-
-        }
+        else{text =  ``}
 
         textField.style.textAlign = "center";
         textField.textContent = text;
-
-
 
         requestAnimationFrame(countLoop);
     }
@@ -48,15 +45,32 @@ window.onload = () => {
     socket.on("message",(input)=>{
 
         const tags = input.tags;
-        let [text, minutes] = input.message.split(" ");
+        let [text, args] = input.message.split(" ");
 
 
-        if(text.toLowerCase() == "timeout" && ["broadcaster"].some((type)=>(tags["badges"]||{})[type])){
-            if(!minutes){
-                minutes = 30
+        if(text.toLowerCase() == "timer" && ["broadcaster", "moderator"].some((type)=>(tags["badges"]||{})[type])){
+
+            if(!args){
+                args = 30
             }
-            goal = new Date().getTime() + 60000*minutes
+
+            if(args === "on"){
+                timerOn = true;
+            }
+
+            if(args === "off"){
+                timerOn = false;
+            }
+
+            if(args === "toggle"||args === "switch"){
+                timerOn = !timerOn
+            }
+
+            goal = new Date().getTime() + 60000*args
+
         }
+
+
 
     })
 
