@@ -3,67 +3,59 @@ const tmi = require('tmi.js');
 const app = require('express')();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
-const { messageManipulators: {cleanMsg}} = require("./utils")
-console.log(cleanMsg);
+const { messageManipulators: {cleanMsg}} = require("./utils");
 
-const prefix = "?"
+const prefix = "?";
 const sockets = new Set();
 
 
-require('dotenv').config()
+require('dotenv').config();
 
 
-const discordClient = new discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] })
-// discordClient.login(process.env.BOT_TOKEN)
+const discordClient = new discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
+discordClient.login(process.env.BOT_TOKEN);
 
 
 discordClient.on("message", async msg => {
   if(!msg.author.bot && msg.content.length > 0 && msg.content.startsWith(prefix) && msg.channel.name == "🔴live-chat"){
-
-    const tags = {};
-    tags["display-name"] = msg.member.displayName
-    tags["username"] = msg.author.username
-    tags["platform"] = "discord"
-    tags["profile-picture"] = msg.author.displayAvatarURL()
-    const badges = {}
-    for(let c of msg.member.roles.cache.array().map((r)=>r.name)){
-
+    msg = await cleanMsg(msg);
     
+    const tags = {};
+    tags["display-name"] = msg.member.displayName;
+    tags["username"] = msg.author.username;
+    tags["platform"] = "discord";
+    tags["profile-picture"] = msg.author.displayAvatarURL();
+    const badges = {};
+    for(let c of msg.member.roles.cache.array().map((r)=>r.name)){
         if(c=="Admin" || c=="Moderator"){
             badges["moderator"]="0";
         }
-
         if(c=="Streamer"){
             badges["broadcaster"]="0";
         }
-
         if(c=="Vip"){
             badges["vip"]="0";
         }
         if(c=="Twitch Subscriber"){
             badges["subscriber"]="0";
         }
-
     }
-    tags["badges"] = badges
+    tags["badges"] = badges;
 
-
-    const messageNoPrefix = msg.content.substr(1)
-        for(const socket of sockets){
-            input = { "message": messageNoPrefix, tags, "clean-message": cleanMsg(messageNoPrefix)};
-            socket.emit('message',input);
-        }
+    const messageNoPrefix = msg.content.substr(1);
+    for(const socket of sockets){
+        input = { "message": messageNoPrefix, tags, "clean-message": messageNoPrefix};
+        socket.emit('message',input);
+    }
   }
-
-})
-
+});
 
 const twitchClient = new tmi.Client({
 	connection: {
 		secure: true,
 		reconnect: true
 	},
-	channels: [ 'saintplaysthings' ]
+	channels: [ 'saintplaysthings', "dav1dsnyder404" ]
 });
 
 twitchClient.connect();
@@ -71,20 +63,20 @@ twitchClient.connect();
 twitchClient.on('message', (channel, tags, message, self) => {
     tags["platform"] = "twitch";
     if(message.startsWith(prefix)) {
-        const messageNoPrefix = message.substr(1)
+        const messageNoPrefix = message.substr(1);
             for(const socket of sockets){
-                let input = {"message":messageNoPrefix, tags}
+                let input = {"message":messageNoPrefix, tags};
                 socket.emit('message',input);
             }
     }
 });
 
 io.on('connection', (socket) => {
-    sockets.add(socket)
+    sockets.add(socket);
     console.log('a user connected');
     socket.on("disconnect",()=>{
         console.log('a user disconnected');
-        sockets.delete(socket)
+        sockets.delete(socket);
     });
 });
 

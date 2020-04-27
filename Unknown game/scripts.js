@@ -1,26 +1,37 @@
+const twoToOneIndex = (x, y, rows = 5) => (x * rows + y);
+const oneToTwoIndex = (i, rows=5) => ({x:Math.floor(i/rows), y: Math.floor(i%rows)});
+const toChessStyle = (x, y) => `${String.fromCharCode(x + 97)}${y + 1}`;
+const fromChessStyle = str => [str[0].charCodeAt() - 97, +str[1] - 1]
+
+const currentPlayImage = (parent, images, currentPlatform, className="") => {
+    const image = images[currentPlatform];
+    const imageElement = document.createElement("img");
+    imageElement.src = image;
+    imageElement.className = className;
+    parent.appendChild(imageElement);
+};
+
 window.onload = () => {
     console.log("ChatGame Loaded");
     const socket = io.connect("localhost:3001");
-    var count = 0;
-    var board = createBoard(5,5);
-    var voters = new Set();
-    var votes = {};
+    let count = 0;
+    let board = createBoard(5,5);
+    let voters = new Set();
+    let votes = {};
     const start = Math.random()<0.5;
-    var currentPlatform = start?"twitch":"discord";
-    var timer = false;
-    var timerStart;
-    var duration = 10000
-    var moves = new Set();
-    var boardDivs = createBoardDivs(25);
+    let currentPlatform = start?"twitch":"discord";
+    let timer = false;
+    let timerStart;
+    let duration = 10000;
+    let moves = new Set();
+    let boardDivs = createBoardDivs(25);
     changePlatform();
-    const images = {}
-    images["discord"] = "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.podfeet.com%2Fblog%2Fwp-content%2Fuploads%2F2018%2F02%2Fdiscord-logo.png&f=1&nofb=1";
-    images["twitch"] = "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fpngimg.com%2Fuploads%2Ftwitch%2Ftwitch_PNG27.png&f=1&nofb=1";
-
- 
+    const images = {
+        discord: "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.podfeet.com%2Fblog%2Fwp-content%2Fuploads%2F2018%2F02%2Fdiscord-logo.png&f=1&nofb=1",
+        twitch: "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fpngimg.com%2Fuploads%2Ftwitch%2Ftwitch_PNG27.png&f=1&nofb=1"
+    };
 
     gameLoop();
-
 
     function gameLoop(){
         if(timer){
@@ -30,18 +41,20 @@ window.onload = () => {
     }
 
     function createBoard(x, y){
-        return Array.from(Array(x), () => new Array(y))    
+        return Array.from(Array(x), () => new Array(y));    
     }
 
     function createBoardDivs(count){
-        let boardTemp = []
+        let boardTemp = [];
         const board = document.createElement("div");
         board.id = "board";
         document.body.appendChild(board);
 
-        for(let i=0; i<count;i++){
+        for(let i=0; i < count;i++){
             const element = document.createElement("div");
             element.classList.add("cell");
+            const {x,y} = oneToTwoIndex(i);
+            element.innerText = toChessStyle(x, y);
             board.appendChild(element);
             boardTemp.push(element);
         }
@@ -50,8 +63,6 @@ window.onload = () => {
     }
 
     function changePlatform(){
-
-
         if(currentPlatform == "twitch"){
             currentPlatform = "discord";
         }
@@ -59,10 +70,9 @@ window.onload = () => {
             currentPlatform = "twitch";
         }
 
-        document.getElementById("board").className =currentPlatform;
+        document.getElementById("board").className = currentPlatform;
         votes = {};
         voters = new Set();
-
     }
 
     function startTimer(){
@@ -86,77 +96,65 @@ window.onload = () => {
 
         for(let vote of Object.keys(votes)){
             let[x, y] = [vote[0].charCodeAt()-97, +vote[1]-1];
-            boardDivs[(x*5+y)].innerHTML=""
+            boardDivs[(twoToOneIndex(x, y))].innerHTML="";
         }
 
 
-        let[x, y] = [move[0].charCodeAt()-97, +move[1]-1];
+        let[x, y] = fromChessStyle(move);
+        
         board[x][y] = currentPlatform;
-
-        const index = (x*5+y);
-        const image = images[currentPlatform];
-        const imageElement = document.createElement("img");
-        imageElement.src = image;
-        boardDivs[index].appendChild(imageElement);
-
+        index = twoToOneIndex(x, y);
+        
+        currentPlayImage(boardDivs[index], images, currentPlatform);
     }
-
-
+    
+    
     function validMove(move){
         let re = /^[a-e][1-5]$/;
         return (re.test(move) && !moves.has(move));
     }
 
-socket.on("message",(input)=>{
+    socket.on("message",(input)=>{
+        let tags = input["tags"];
+        let user = tags['username'];
+        let [command, message] = input["message"].split(" ");
+        
+        console.log(currentPlatform);
+        if(command.toLowerCase() == "vote"){
+            if(tags["platform"]==currentPlatform && !voters.has(user)){
+                message = message.toLowerCase();
+                if(validMove(message)){
 
+                    if(!timer){
+                        timer = true;
+                        startTimer();
+                    }
+                    let [x, y] = fromChessStyle(message);
+                    const index = twoToOneIndex(x, y);
 
-    let tags = input["tags"];
-    let user = tags['username'];
-    let [command, message] = input["message"].split(" ")
+                    voters.add(user);
+                    if(!votes[message]){
+                        votes[message] = 0;
 
-    if(command.toLowerCase() == "vote"){
-        if(tags["platform"]==currentPlatform && !voters.has(user)){
-            message = message.toLowerCase();
-            if(validMove(message)){
+                        currentPlayImage(boardDivs[index], images, currentPlatform, "vote");
 
-                if(!timer){
-                    timer = true;
-                    startTimer();
+                        const spanElement = document.createElement("span");
+                        spanElement.innerText = 0;
+                        spanElement.className = "voteCount";
+                        boardDivs[index].appendChild(spanElement);
+                    }
+
+                
+                    const count = ++votes[message];
+                    const span = boardDivs[index].getElementsByClassName("voteCount")[0];
+                    span.innerText = count;
                 }
-                let[x, y] = [message[0].charCodeAt()-97, +message[1]-1];
-                const index = (x*5+y);
-
-                voters.add(user);
-                if(!votes[message]){
-                    votes[message] = 0;
-
-                    //TODO put in function
-                    
-                    const image = images[currentPlatform];
-                    const imageElement = document.createElement("img");
-                    imageElement.src = image;
-                    imageElement.className = "vote";
-                    boardDivs[index].appendChild(imageElement);
-
-                    const spanElement = document.createElement("span");
-                    spanElement.innerText = 0;
-                    spanElement.className = "voteCount";
-                    boardDivs[index].appendChild(spanElement);
-
-                }
-
-            
-                const count = ++votes[message];
-                const span = boardDivs[index].getElementsByClassName("voteCount")[0];
-                span.innerText = count;
             }
         }
-    }
 
-    if(command.toLowerCase() == "settimer" && ["broadcaster", "moderator"].some((type)=>(tags["badges"]||{})[type])){
-        duration = message*1000
-    }
+        if(command.toLowerCase() == "settimer" && ["broadcaster", "moderator"].some(type=>(tags["badges"]||{})[type])){
+            duration = message*1000;
+        }
 
-})
-
-}
+    });
+};

@@ -8,20 +8,20 @@ window.onload = () => {
     let textField = document.getElementById("t1");
 
 
-    document
-    countLoop()
+    document;
+    countLoop();
     
 
     function countLoop(){
         var d = new Date();
         var now = d.getTime();
 
-        let currentWaitTime = (goal-now)
-        S = Math.abs((currentWaitTime/1000|0)%60)
-        M = Math.abs((currentWaitTime/60000|0)%60)
+        let currentWaitTime = (goal-now);
+        S = Math.abs((currentWaitTime/1000|0)%60);
+        M = Math.abs((currentWaitTime/60000|0)%60);
 
-        M = (""+M).padStart(2,"0")
-        S = (""+S).padStart(2,"0")
+        M = (""+M).padStart(2,"0");
+        S = (""+S).padStart(2,"0");
         if(timerOn){
             if(currentWaitTime>0){
 
@@ -34,7 +34,7 @@ window.onload = () => {
 
             }
         }
-        else{text =  ``}
+        else{text =  ``;}
 
         textField.style.textAlign = "center";
         textField.textContent = text;
@@ -51,7 +51,7 @@ window.onload = () => {
         if(text.toLowerCase() == "timer" && ["broadcaster", "moderator"].some((type)=>(tags["badges"]||{})[type])){
 
             if(!args){
-                args = 30
+                args = 30;
             }
 
             if(args === "on"){
@@ -63,16 +63,16 @@ window.onload = () => {
             }
 
             if(args === "toggle"||args === "switch"){
-                timerOn = !timerOn
+                timerOn = !timerOn;
             }
 
-            goal = new Date().getTime() + 60000*args
+            goal = new Date().getTime() + 60000*args;
 
         }
 
 
 
-    })
+    });
 
 
 
@@ -94,4 +94,4 @@ window.onload = () => {
 
 
 
-}
+};
