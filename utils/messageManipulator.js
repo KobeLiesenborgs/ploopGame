@@ -43,11 +43,17 @@ const replaceChannelMentions = async msg => {
     return msg
 }
 
+const cleanMsg = async msg => {
+    msg = await replaceMentions(msg)
+    msg = await replaceChannelMentions(msg)
+    return msg
+}
+
 module.exports = {
     replaceMentions,
     replaceChannelMentions,
+    cleanMsg,
     urlRegex,
-    codeRegex,
     customEmojiRegex,
     channelMentionRegex,
     mentionRegex,

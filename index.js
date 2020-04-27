@@ -3,6 +3,8 @@ const tmi = require('tmi.js');
 const app = require('express')();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
+const { messageManipulators: {cleanMsg}} = require("./utils")
+console.log(cleanMsg);
 
 const prefix = "?"
 const sockets = new Set();
@@ -12,7 +14,7 @@ require('dotenv').config()
 
 
 const discordClient = new discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] })
-discordClient.login(process.env.BOT_TOKEN)
+// discordClient.login(process.env.BOT_TOKEN)
 
 
 discordClient.on("message", async msg => {
@@ -48,7 +50,7 @@ discordClient.on("message", async msg => {
 
     const messageNoPrefix = msg.content.substr(1)
         for(const socket of sockets){
-            input = {"message":messageNoPrefix, tags, "clean-message":msg.cleanContent.substr(1)};
+            input = { "message": messageNoPrefix, tags, "clean-message": cleanMsg(messageNoPrefix)};
             socket.emit('message',input);
         }
   }
