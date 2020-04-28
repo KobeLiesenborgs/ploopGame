@@ -3,7 +3,3 @@ Description is optional!
 Don't look at this crap, it's late and I shouldn't be here.
 Take a look at: https://github.com/CodingGarden/SeedlingDrop instead
 
-# TODO
-* [] move some functions into the utils folder to be used in other places
-* [] move some stuff to into functions for DRYer code
-* [] 

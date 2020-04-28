@@ -1,8 +1,11 @@
+
+// helper function for coverting indices back and forth
 const twoToOneIndex = (x, y, rows = 5) => (x * rows + y);
 const oneToTwoIndex = (i, rows=5) => ({x:Math.floor(i/rows), y: Math.floor(i%rows)});
 const toChessStyle = (x, y) => `${String.fromCharCode(x + 97)}${y + 1}`;
-const fromChessStyle = str => [str[0].charCodeAt() - 97, +str[1] - 1]
+const fromChessStyle = str => [str[0].charCodeAt() - 97, +str[1] - 1];
 
+// set an image based on the currentPlatforms turn
 const currentPlayImage = (parent, images, currentPlatform, className="") => {
     const image = images[currentPlatform];
     const imageElement = document.createElement("img");
@@ -40,10 +43,12 @@ window.onload = () => {
         requestAnimationFrame(gameLoop);
     }
 
+    // creates a 2d array of x by y size for the gameboard
     function createBoard(x, y){
         return Array.from(Array(x), () => new Array(y));    
     }
 
+    //create all the divs that are displayed on as the gameboard
     function createBoardDivs(count){
         let boardTemp = [];
         const board = document.createElement("div");
@@ -54,14 +59,17 @@ window.onload = () => {
             const element = document.createElement("div");
             element.classList.add("cell");
             const {x,y} = oneToTwoIndex(i);
-            element.innerText = toChessStyle(x, y);
+            const location = document.createElement("span");
+            location.innerText = toChessStyle(x, y);
+            location.className = "location";
+            element.appendChild(location);
             board.appendChild(element);
             boardTemp.push(element);
         }
-
         return boardTemp;
     }
 
+    // toggle the current player and set the background of the screen respectively
     function changePlatform(){
         if(currentPlatform == "twitch"){
             currentPlatform = "discord";
@@ -75,10 +83,12 @@ window.onload = () => {
         voters = new Set();
     }
 
+    // set the timer start to now
     function startTimer(){
         timerStart = new Date().getTime();
     }
 
+    // if voting time is up then make the move and swap the turn
     function checkTimer(){
         let now = new Date().getTime();
         let currentWaitTime = now-timerStart;
@@ -90,16 +100,19 @@ window.onload = () => {
 
     }
 
+    // make a move, based the which spot got the most votes, if they all get the same number of votes then use the first one
     function makeMove(){
         let move = Object.entries(votes).sort((a,b)=>b[1]-a[1])[0][0];
         moves.add(move);
 
+        // reset the innerhtml of all the temp items to display the votes
         for(let vote of Object.keys(votes)){
             let[x, y] = [vote[0].charCodeAt()-97, +vote[1]-1];
             boardDivs[(twoToOneIndex(x, y))].innerHTML="";
         }
 
 
+        // set the voted location to the image of the current platform
         let[x, y] = fromChessStyle(move);
         
         board[x][y] = currentPlatform;
@@ -108,9 +121,9 @@ window.onload = () => {
         currentPlayImage(boardDivs[index], images, currentPlatform);
     }
     
-    
+    // check if a move has been made with valid syntax and hasn't already been played
     function validMove(move){
-        let re = /^[a-e][1-5]$/;
+        let re = /^[a-e][1-5]$/i;
         return (re.test(move) && !moves.has(move));
     }
 
@@ -118,13 +131,14 @@ window.onload = () => {
         let tags = input["tags"];
         let user = tags['username'];
         let [command, message] = input["message"].split(" ");
-        
-        console.log(currentPlatform);
+
         if(command.toLowerCase() == "vote"){
+            // check if it the turn of the platform the message was sent on and that the use hasn't already voted
             if(tags["platform"]==currentPlatform && !voters.has(user)){
                 message = message.toLowerCase();
+    
                 if(validMove(message)){
-
+                    // if timer is false then it is time to reset the timer which happens when we toggle the turn
                     if(!timer){
                         timer = true;
                         startTimer();
@@ -133,9 +147,12 @@ window.onload = () => {
                     const index = twoToOneIndex(x, y);
 
                     voters.add(user);
+
+                    // add in a temporary image for locations that have been voted for
                     if(!votes[message]){
                         votes[message] = 0;
 
+                        // set the image of the current platform that made the move
                         currentPlayImage(boardDivs[index], images, currentPlatform, "vote");
 
                         const spanElement = document.createElement("span");
@@ -144,7 +161,7 @@ window.onload = () => {
                         boardDivs[index].appendChild(spanElement);
                     }
 
-                
+                    // set the count of the temp image to be the number of votes
                     const count = ++votes[message];
                     const span = boardDivs[index].getElementsByClassName("voteCount")[0];
                     span.innerText = count;
@@ -152,6 +169,7 @@ window.onload = () => {
             }
         }
 
+        // mod only command for increasing turn duration
         if(command.toLowerCase() == "settimer" && ["broadcaster", "moderator"].some(type=>(tags["badges"]||{})[type])){
             duration = message*1000;
         }
