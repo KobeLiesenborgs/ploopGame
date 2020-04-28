@@ -58,6 +58,10 @@ img{
     background-color: #47a7e6;
 }
 
+.tie {
+    background: linear-gradient(to bottom right, #a562cf 0%, #47a7e6 100%);
+}
+
 .vote{
     opacity: 0.5;
 }

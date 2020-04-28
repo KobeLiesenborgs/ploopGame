@@ -55,7 +55,7 @@ const twitchClient = new tmi.Client({
 		secure: true,
 		reconnect: true
 	},
-	channels: [ 'saintplaysthings', "dav1dsnyder404" ]
+	channels: [ 'saintplaysthings']
 });
 
 twitchClient.connect();
