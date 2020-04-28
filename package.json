@@ -16,5 +16,8 @@
     "socket.io": "^2.3.0",
     "socketio": "^1.0.0",
     "tmi.js": "^1.5.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0"
   }
 }
