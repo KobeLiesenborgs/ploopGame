@@ -77,8 +77,7 @@ window.onload = () => {
         else{
             currentPlatform = "twitch";
         }
-
-        document.getElementById("board").className = currentPlatform;
+        document.getElementById("board").className =currentPlatform;
         votes = {};
         voters = new Set();
     }
@@ -107,7 +106,7 @@ window.onload = () => {
 
         // reset the innerhtml of all the temp items to display the votes
         for(let vote of Object.keys(votes)){
-            let[x, y] = [vote[0].charCodeAt()-97, +vote[1]-1];
+            let[x, y] = fromChessStyle(vote);
             boardDivs[(twoToOneIndex(x, y))].innerHTML="";
         }
 
@@ -133,12 +132,12 @@ window.onload = () => {
         let [command, message] = input["message"].split(" ");
 
         if(command.toLowerCase() == "vote"){
-            // check if it the turn of the platform the message was sent on and that the use hasn't already voted
+            // check if user is on active platform and hasn't voted yet this round
             if(tags["platform"]==currentPlatform && !voters.has(user)){
                 message = message.toLowerCase();
     
                 if(validMove(message)){
-                    // if timer is false then it is time to reset the timer which happens when we toggle the turn
+                    // if there is no running timer, set one
                     if(!timer){
                         timer = true;
                         startTimer();
@@ -169,7 +168,7 @@ window.onload = () => {
             }
         }
 
-        // mod only command for increasing turn duration
+        // mod only command for setting turn duration
         if(command.toLowerCase() == "settimer" && ["broadcaster", "moderator"].some(type=>(tags["badges"]||{})[type])){
             duration = message*1000;
         }
