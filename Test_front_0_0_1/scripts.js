@@ -219,33 +219,35 @@ window.onload = () => {
 
     //send the drop flying upward until it hits the top
     function yoink(name){
-        displays[user].yoinked = true;
-        displays[name].velocity.x=0;
-        displays[name].velocity.y=-45;
+        if(!displays[name].yeeted){
+            displays[user].yoinked = true;
+            displays[name].velocity.x=0;
+            displays[name].velocity.y=-45;
 
-        let yoinkImage = document.createElement("IMG");
-        yoinkImage.src = "images/Yoink.png";
-        yoinkImage.style.position = 'absolute';
-        yoinkImage.style.top = displays[name].image.style.top - displays[name].image.width/2;
-        yoinkImage.style.left = displays[name].image.style.left;
-        yoinkImage.width = displays[name].image.height*3;
-        yoinkImage.classList.add("yoink");
+            let yoinkImage = document.createElement("IMG");
+            yoinkImage.src = "images/Yoink.png";
+            yoinkImage.style.position = 'absolute';
+            yoinkImage.style.top = displays[name].image.style.top - displays[name].image.width/2;
+            yoinkImage.style.left = displays[name].image.style.left;
+            yoinkImage.width = displays[name].image.height*3;
+            yoinkImage.classList.add("yoink");
 
-        let yoinkChoice = Math.random();
-        if(yoinkChoice<0.01){
-            audioElement5.play();
-        }
-        else if(yoinkChoice<0.05){
-            audioElement4.play();
-        }
-        else{
-            audioElement3.play();
-        }
+            let yoinkChoice = Math.random();
+            if(yoinkChoice<0.01){
+                audioElement5.play();
+            }
+            else if(yoinkChoice<0.05){
+                audioElement4.play();
+            }
+            else{
+                audioElement3.play();
+            }
 
-        document.body.appendChild(yoinkImage);
-        window.setTimeout(()=>{
-                document.body.removeChild(yoinkImage);
-        },2000);
+            document.body.appendChild(yoinkImage);
+            window.setTimeout(()=>{
+                    document.body.removeChild(yoinkImage);
+            },2000);
+        }
     }
 
     // negate the x velocity

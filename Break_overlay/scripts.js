@@ -4,7 +4,7 @@ window.onload = () => {
     let startDate = new Date();
     let goal = startDate.getTime();
     let text;
-    let timerOn = true;
+    let timerOn = false;
     let textField = document.getElementById("t1");
 
 
@@ -24,6 +24,7 @@ window.onload = () => {
         S = (""+S).padStart(2,"0");
         if(timerOn){
             if(currentWaitTime>0){
+                
                 text = `Quick break, will restart in ${M} minutes ${S} seconds.`;
             }
             else{
