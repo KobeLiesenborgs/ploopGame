@@ -19,6 +19,13 @@ const currentPlayImage = (parent, images, currentPlatform, className="") => {
     parent.appendChild(imageElement);
 };
 
+const addLocation = (parent, x, y) => {
+    const location = document.createElement("span");
+    location.innerText = toChessStyle(x, y);
+    location.className = "location";
+    parent.appendChild(location);
+}
+
 window.onload = () => {
     console.log("ChatGame Loaded");
     const socket = io.connect("localhost:3001");
@@ -65,10 +72,7 @@ window.onload = () => {
             const element = document.createElement("div");
             element.classList.add("cell");
             const {x,y} = oneToTwoIndex(i);
-            const location = document.createElement("span");
-            location.innerText = toChessStyle(x, y);
-            location.className = "location";
-            element.appendChild(location);
+            addLocation(element, x, y);
             board.appendChild(element);
             boardTemp.push(element);
         }
@@ -172,6 +176,13 @@ window.onload = () => {
             boardDivs[(twoToOneIndex(x, y))].innerHTML="";
         }
 
+        for (let vote of Object.keys(votes)) {
+            let [x, y] = fromChessStyle(vote);
+            if(vote != move){
+                setLocation(boardDivs[(twoToOneIndex(x, y))], x, y)
+            }
+        }
+
 
         // set the voted location to the image of the current platform
         let[x, y] = fromChessStyle(move);
@@ -238,3 +249,6 @@ window.onload = () => {
 
     });
 };
+
+
+
