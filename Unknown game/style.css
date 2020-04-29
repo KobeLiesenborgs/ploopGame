@@ -58,6 +58,10 @@ img{
     background-color: #47a7e6;
 }
 
+.tie {
+    background: linear-gradient(to bottom right, #a562cf 0%, #47a7e6 100%);
+}
+
 .vote{
     opacity: 0.5;
 }
@@ -77,7 +81,7 @@ img{
     left: 50%;
     transform: translate(-50%,-50%);
     color: antiquewhite;
-    font-size: 1.5rem;
+    font-size: 2rem;
     text-transform: capitalize;
 }
 

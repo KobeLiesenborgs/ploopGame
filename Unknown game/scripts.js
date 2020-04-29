@@ -1,3 +1,8 @@
+//TODO add in bg on tie being gradient, css set
+//add in restart 10s after win
+//add in help section
+//add in early tie detection
+
 
 // helper function for coverting indices back and forth
 const twoToOneIndex = (x, y, rows = 5) => (x * rows + y);
@@ -31,7 +36,8 @@ window.onload = () => {
     changePlatform();
     const images = {
         discord: "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.podfeet.com%2Fblog%2Fwp-content%2Fuploads%2F2018%2F02%2Fdiscord-logo.png&f=1&nofb=1",
-        twitch: "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fpngimg.com%2Fuploads%2Ftwitch%2Ftwitch_PNG27.png&f=1&nofb=1"
+        twitch: "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fpngimg.com%2Fuploads%2Ftwitch%2Ftwitch_PNG27.png&f=1&nofb=1",
+        1: "https://cdn3.iconfinder.com/data/icons/workplace-items-2/614/3144_-_Tie-512.png"
     };
 
     gameLoop();
@@ -77,8 +83,7 @@ window.onload = () => {
         else{
             currentPlatform = "twitch";
         }
-
-        document.getElementById("board").className = currentPlatform;
+        document.getElementById("board").className =currentPlatform;
         votes = {};
         voters = new Set();
     }
@@ -88,17 +93,73 @@ window.onload = () => {
         timerStart = new Date().getTime();
     }
 
+    //check board for a winning combination
+    //return platform, 1 for tie 0 for undetermined
+    function checkWin(position){
+        let[x, y] = fromChessStyle(position);
+        let platform = board[x][y];
+        for(let j = 0 ; j < 2 ; j++){
+            let tx = 0;
+            let ty = 0;
+            let d1 = 0;
+            let d2 = 0;
+            let d3 = 0;
+            let d4 = 0;
+
+            for(let i = 0 + j ; i < 4 + j ; i++){
+                //vertical 4
+                tx += board[i][y] == platform?1:0;
+                //horizontal 4
+                ty += board[x][i] == platform?1:0;
+                //tl to br
+                d1 += board[i][i] == platform?1:0;
+                //bl to tr
+                d2 += board[4-i][i] == platform?1:0;
+                //a2 - d5 & b1 - e4
+                d3 += board[1+i-2*j][i] == platform?1:0;
+                //a4 - d1 & b5 - e2
+                d4 += board[4-(1+i-2*j)][i] == platform?1:0;
+            }
+            for(c of [ty,tx,d1,d2,d3,d4]){
+                if(c==4){
+                    return platform;
+                }
+            }
+        }
+        let full = true;
+        for(row of board){
+            for(position of row){
+                if(position == undefined){
+                    full = false;
+                }
+            }
+        }
+        return(full?1:0);
+    }
+
     // if voting time is up then make the move and swap the turn
     function checkTimer(){
         let now = new Date().getTime();
         let currentWaitTime = now-timerStart;
         if(currentWaitTime > duration){
             timer = false;
-            makeMove();
-            changePlatform();
+            let winner = checkWin(makeMove());
+            if(winner){
+                fillField(winner);
+            }else{
+                changePlatform();
+            }
         }
-
     }
+
+
+    function fillField(platform){
+        for(let i=0;i<boardDivs.length;i++){
+                boardDivs[i].innerHTML="";
+                currentPlayImage(boardDivs[i], images, platform);
+        }
+    }
+
 
     // make a move, based the which spot got the most votes, if they all get the same number of votes then use the first one
     function makeMove(){
@@ -107,7 +168,7 @@ window.onload = () => {
 
         // reset the innerhtml of all the temp items to display the votes
         for(let vote of Object.keys(votes)){
-            let[x, y] = [vote[0].charCodeAt()-97, +vote[1]-1];
+            let[x, y] = fromChessStyle(vote);
             boardDivs[(twoToOneIndex(x, y))].innerHTML="";
         }
 
@@ -119,6 +180,7 @@ window.onload = () => {
         index = twoToOneIndex(x, y);
         
         currentPlayImage(boardDivs[index], images, currentPlatform);
+        return move;
     }
     
     // check if a move has been made with valid syntax and hasn't already been played
@@ -133,12 +195,12 @@ window.onload = () => {
         let [command, message] = input["message"].split(" ");
 
         if(command.toLowerCase() == "vote"){
-            // check if it the turn of the platform the message was sent on and that the use hasn't already voted
+            // check if user is on active platform and hasn't voted yet this round
             if(tags["platform"]==currentPlatform && !voters.has(user)){
                 message = message.toLowerCase();
     
                 if(validMove(message)){
-                    // if timer is false then it is time to reset the timer which happens when we toggle the turn
+                    // if there is no running timer, set one
                     if(!timer){
                         timer = true;
                         startTimer();
@@ -169,7 +231,7 @@ window.onload = () => {
             }
         }
 
-        // mod only command for increasing turn duration
+        // mod only command for setting turn duration
         if(command.toLowerCase() == "settimer" && ["broadcaster", "moderator"].some(type=>(tags["badges"]||{})[type])){
             duration = message*1000;
         }
